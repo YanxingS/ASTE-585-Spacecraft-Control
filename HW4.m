@@ -22,6 +22,12 @@ Hb = param.Hb;
 param.w0 = 2*pi/(60*60*24);
 w0 = param.w0;
 
+param.epsilon = w0*(1-1/sqrt(1+(w0*Iz/Hb)));
+epsilon = param.epsilon;
+
+param.wn = sqrt(Hb^2/(Ix*Iz));
+wn = param.wn;
+
 %% Initial guesses for parameters
 param.kf = -0.000000000000000000000000000032; % Adjust this value
 kf = param.kf;
@@ -63,6 +69,9 @@ stepinfo(G_close_loop)
 figure(2);
 bode(G_close_loop);
 
+% root locus plot analysis
+figure(3);
+rlocus(G_close_loop);
 % Adjust kf, ki, alpha, and beta to meet requirements
 % Use the stepinfo function to get overshoot and other metrics
 % Use the bandwidth function to get the bandwidth of the system
@@ -72,12 +81,14 @@ info = stepinfo(G_close_loop);
 overshoot = info.Overshoot;
 bw = bandwidth(G_close_loop);
 
-fprintf('Overshoot: %f\n', overshoot);
-fprintf('Bandwidth: %f rad/sec\n', bw);
+%% define transfer function for roll phi/gamma anad yaw psi/gamma
+determinant = Ix*Iz*(s^2+w0^2)*(s^2+wn^2);
+G_phi_s = (-Hb^2*(s^2+(w0-epsilon)^2))/determinant; %phi/gamma
+G_psi_s = (s*Hb*(1+G_phi_s))/(s^2+w0*Hb);
 
-% Iterate to adjust parameters based on the results
-% Example adjustments (these would typically be done manually based on the output)
-% param.kf = new_kf;
-% param.ki = new_ki;
-% param.alpha = new_alpha;
-% param.beta = new_beta;
+%% define controller for roll and pitch 
+
+K_s_roll = tf([-1,-0.011-2.8e-05],[1,0.065,0]);
+
+%% define close loop transfer function for roll and yaw
+
