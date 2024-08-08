@@ -29,16 +29,16 @@ param.wn = sqrt(Hb^2/(Ix*Iz));
 wn = param.wn;
 
 %% Initial guesses for parameters
-param.kf = -0.000000000000000000000000000032; % Adjust this value
+param.kf = 0.00000006; % Adjust this value
 kf = param.kf;
-
-param.ki = 0.001; % Adjust this value
+    
+param.ki = 0.013; % Adjust this value
 ki = param.ki;
 
-param.alpha = 0.0005; % Adjust this value
+param.alpha = 0.56; % Adjust this value
 alpha = param.alpha;
 
-param.beta = -0.00001; % Adjust this value
+param.beta = 0.6; % Adjust this value
 beta = param.beta;
 
 s = tf('s');
@@ -71,7 +71,7 @@ bode(G_close_loop);
 
 % root locus plot analysis
 figure(3);
-rlocus(G_close_loop);
+rlocus(G_open_loop);
 % Adjust kf, ki, alpha, and beta to meet requirements
 % Use the stepinfo function to get overshoot and other metrics
 % Use the bandwidth function to get the bandwidth of the system
@@ -88,7 +88,26 @@ G_psi_s = (s*Hb*(1+G_phi_s))/(s^2+w0*Hb);
 
 %% define controller for roll and pitch 
 
-K_s_roll = tf([-1,-0.011-2.8e-05],[1,0.065,0]);
+K_s_roll = -((1+0.013/s)*(s+0.05)/(s+0.65));
 
 %% define close loop transfer function for roll and yaw
+opts = stepDataOptions('StepAmplitude',deg2rad(5)); % adjust step input magnitude
 
+G_cl_phi = feedback(K_s_roll*G_phi_s,H);
+figure(4)
+step(G_cl_phi,opts);
+
+G_cl_psi = feedback(K_s_roll*G_psi_s,H);
+figure(5)
+step(G_cl_psi,opts);
+
+%% define transfer function for disturbance input 
+G_x = (Iz*s^2+w0*Hb)/(determinant);
+G_z = (Hb*s)/(determinant);
+    
+%% define disturbance equation and perform laplace transformation
+syms t 
+
+T_di_t = 10e-5+10e-4*sin(w0*t);
+
+T_di_x = laplace(T_di_t);
