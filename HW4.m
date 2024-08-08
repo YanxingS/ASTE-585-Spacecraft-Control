@@ -111,3 +111,25 @@ syms t
 T_di_t = 10e-5+10e-4*sin(w0*t);
 
 T_di_x = laplace(T_di_t);
+
+%% define actuator parameters and TF
+
+param.tao_gamma = 5;
+tao_gamma = param.tao_gamma;
+
+param.tao_w = 5;
+tao_w = param.tao_w;
+
+roll_motor = 1/(1+tao_gamma*s);
+pitch_motor = 1/(1+tao_w*s);
+
+%% construct new close loop with actuator model
+G_cl_phi = feedback(K_s_roll*roll_motor*G_phi_s,H);
+G_cl_theta = feedback(K_s*G_theta_s*pitch_motor,H);
+
+figure(6)
+bode(G_cl_phi);
+figure(7)
+bode(G_cl_theta);
+
+
